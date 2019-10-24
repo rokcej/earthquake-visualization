@@ -2,9 +2,7 @@ PShape map;
 Table data;
 
 float scale = 1.0;
-float scaleTarget = 1.0;
-float scaleStep = 1.2;
-float scaleSpeed = 0.05;
+float scaleStep = 1.1;
 
 boolean dragging = false;
 float dragX = 0, dragY = 0;
@@ -12,10 +10,22 @@ float posX = 0, posY = 0;
 
 float timeLast = 0;
 
+Slider slider;
+
 void setup() {
-    size(1600, 900);
+    size(1600, 800);
     map = loadShape("world_map.svg");
     data = new Table("earthquake_data.csv", true);
+    
+  	// Set slider
+  	int minYear = data.rows[0].year;
+  	int maxYear = minYear;
+  	for (int i = 1; i < data.count; ++i) {
+      	int year = data.rows[i].year; 
+		if (year < minYear) minYear = year;
+		else if (year > maxYear) maxYear = year;
+  	}
+  	slider = new Slider(0.5*width, 0.9*height, 0.8*width, minYear, maxYear);
 }
 
 void update() {
@@ -23,15 +33,7 @@ void update() {
 	float dt = 0.001 * (timeCurrent - timeLast); // Seconds
 	float timeLast = timeCurrent;
 
-	if (scale < scaleTarget) {
-    	float diff = scaleTarget - scale;
-    	scale += scaleSpeed * dt;
-    	if (scale > scaleTarget) scale = scaleTarget;
-	} else if (scale > scaleTarget) {
-		float diff = scaleTarget - scale;
-        scale -= scaleSpeed * dt;
-        if (scale < scaleTarget) scale = scaleTarget;
-	}
+	slider.update();
 }
 
 void draw() {
@@ -42,6 +44,8 @@ void draw() {
     noStroke();
     fill(180);
     
+    
+    pushMatrix();
     // Translate
     if (dragging) {
         posX += mouseX - dragX;
@@ -57,8 +61,13 @@ void draw() {
     
     shape(map, 0, 0, width, height);
     for (int i = 0; i < data.count; ++i) {
-        coord(data.rows[i].latitude, data.rows[i].longitude);
+        if (slider.value == data.rows[i].year)
+        	coord(data.rows[i].latitude, data.rows[i].longitude);
     }
+    popMatrix();
+    
+    // UI
+    slider.draw();
 }
 
 void coord(float lat, float lon) {
@@ -76,34 +85,32 @@ void mouseWheel(MouseEvent e) {
     if (scroll < 0) x = -scroll * scaleStep;
     else if (scroll > 0) x = scroll / scaleStep;
     
-    scaleTarget *= x;
+    scale *= x;
     
-    if (scaleTarget < 1.0) { scaleTarget = 1.0; }
-    else if (scaleTarget > 10.0) { scaleTarget = 10.0; }
+    if (scale < 1.0) { scale = 1.0; }
+    else if (scale > 10.0) { scale = 10.0; }
     else { posX *= x; posY *= x; }
     
 }
 
 void mousePressed(MouseEvent e) {
     if (e.getButton() == LEFT) {
-        dragging = true;
-        dragX = mouseX;
-        dragY = mouseY;
+        if (slider.checkHover()) {
+            slider.dragging = true;
+        } else {
+            dragging = true;
+            dragX = mouseX;
+            dragY = mouseY;
+        }
     }
 }
 void mouseReleased(MouseEvent e) {
     if (e.getButton() == LEFT) {
-        dragging = false;
-        posX += mouseX - dragX;
-        posY += mouseY - dragY;
+        slider.dragging = false;
+        if (dragging) {
+            dragging = false;
+            posX += mouseX - dragX;
+            posY += mouseY - dragY;
+        }
     }
 }
-
-/*void mouseDragged() {
-    if (dragging) {
-        posX += mouseX - dragX;
-        posY += mouseY - dragY;
-        dragX = mouseX;
-        dragY = mouseY;
-    }
-}*/

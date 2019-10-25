@@ -11,6 +11,18 @@ class Table {
 			rows[i] = new Row(lines[i + offset]);
 		}
 	}
+
+	void sortByMag() {
+		for (int i = 1; i < count; ++i) {
+			int j = i;
+			while (j > 0 && rows[j].magnitude > rows[j-1].magnitude) {
+				Row temp = rows[j-1];
+				rows[j-1] = rows[j];
+				rows[j] = temp;
+				--j;
+			}
+		}
+	}
 }
 
 class Row {

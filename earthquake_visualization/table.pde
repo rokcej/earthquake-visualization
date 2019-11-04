@@ -71,6 +71,9 @@ class Row {
 	float depth; // Kilometers
 	float magnitude; // Richter scale
 
+	boolean isEarthquake;
+	boolean isNuclear;
+
 	Row(String line) {
     	// Parse data
 		String[] fields = split(line, ',');
@@ -88,6 +91,9 @@ class Row {
 		this.type = fields[4];
 		this.depth = float(fields[5]);
 		this.magnitude = float(fields[8]);
+		// Icon
+		this.isEarthquake = this.type.equals("Earthquake");
+		this.isNuclear = this.type.equals("Nuclear Explosion");
 	}
 
 	
@@ -101,7 +107,18 @@ class Row {
 		// Bubble color
 		pushStyle();
         colorMode(HSB, 360, 1, 1, 1);
-        clr = color(0, 0.95, lerp(0.4, 1.0, (depth - data.minDepth) / (data.maxDepth - data.minDepth)));
+        float hue = 0;
+        float minBrightness = 0.4;
+        float maxBrightness = 1.0;
+        float saturation = 0.95;
+        if (!isEarthquake) {
+        	if (isNuclear) {
+            	hue = 50;
+            	minBrightness = 0.9;
+            	saturation = 1.0;
+        	} else hue = 220;
+        }
+        clr = color(hue, saturation, lerp(minBrightness, maxBrightness, (depth - data.minDepth) / (data.maxDepth - data.minDepth)));
         popStyle();
         
         // Bubble position
@@ -124,8 +141,15 @@ class Row {
         	strokeWeight(0.33);
         	stroke(0, strokeOpacity);
         }
+        
         fill(clr, opacity);
         ellipse(x, y, diameter, diameter);
+        if (isNuclear) {
+            // Draw radioactive symbol
+            fill(0.0, opacity);
+            shapeMode(CENTER);
+        	shape(nuclear, x, y, diameter, diameter);
+        }
         if (strokeOpacity > 0.0) {
             popStyle();
         }

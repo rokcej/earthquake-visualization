@@ -1,6 +1,8 @@
 PShape map;
 int mapWrap = 0;
 
+PShape nuclear;
+
 Table data;
 
 float scale = 1.0;
@@ -22,26 +24,31 @@ float timeLast;
 
 Slider slider;
 
-float minMagnitude, maxMagnitude;
-float minDepth, maxDepth;
-
 float diameterTime = 0.75; // Time for bubbles to scale up/scale down
 float opacityTime = 0.75; // Time for bubbles to change opacity
 float strokeTime = 0.75; // Time for stroke to fade/appear
 
+float minOpacity = 0.05;
+float maxOpacity = 0.4;
+
+Legend legend;
 
 Row highlight = null;
 int highlightWrap = 0;
 
 void setup() {
     size(1600, 800);
-    surface.setResizable(true);
     colorMode(RGB, 255, 255, 255, 1.0);
-
+	
     map = loadShape("world_map_simplified_x2.svg");
     map.disableStyle();
     data = new Table("earthquake_data.csv", true);
     slider = new Slider(0.5*width, 0.9*height, 0.8*width, data.minYear, data.maxYear);
+    
+    nuclear = loadShape("nuclear.svg");
+    nuclear.disableStyle();
+    
+    legend = new Legend();
 
     timeLast = millis();
 }
@@ -128,7 +135,7 @@ void update() {
                 row.opacityTarget = 1.0;
             } else if (abs(slider.value - row.year) <= slider.range) {
                 float t = (float)abs(slider.value - row.year) / (float)slider.range;
-                row.opacityTarget = lerp(0.1, 0.4, t);
+                row.opacityTarget = lerp(maxOpacity, minOpacity, t);
             } else {
                 row.opacityTarget = 0.0;
             }
@@ -184,6 +191,7 @@ void update() {
 }
 
 void drawMap(int wrap) {
+    shapeMode(CORNER);
     noStroke();
     fill(180);
 
@@ -206,6 +214,7 @@ void drawMap(int wrap) {
     stroke(0, 0, 0, 0.25);
     strokeWeight(0.25);
     line(0, 0.5*height, width, 0.5*height);
+    noStroke();
     // Draw bubbles
     for (int i = 0; i < data.count; ++i) {
         if (data.rows[i].year != slider.value && data.rows[i].diameter > 0.0 && data.rows[i].opacity > 0.0) {
@@ -236,6 +245,7 @@ void draw() {
     update();
 
     background(250);
+    //background(232, 245, 255);
 
     // Map
     highlight = null;
@@ -257,6 +267,8 @@ void draw() {
         float hy = (highlight.y + posY - 0.5*height) * scale + 0.5*height;
         tooltip(highlight, hx, hy);
     }
+    // Legend
+    legend.draw();
 
     first = false; // Flag that the first iteration is over
 }

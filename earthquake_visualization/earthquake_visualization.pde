@@ -188,6 +188,7 @@ void update() {
             }
         }
     }
+    legend.update();
 }
 
 void drawMap(int wrap) {
@@ -258,7 +259,7 @@ void draw() {
     // Slider
     slider.draw();
     textAlign(LEFT, TOP);
-    text(frameRate, 0, 0);
+    // text(frameRate, 0, 0); // Show FPS
 	// Tooltip
 	if (highlight != null) {
         float hx = ((highlight.x + mapWrap*width + posX - 0.5*width) * scale + 0.5*width);
@@ -294,7 +295,9 @@ void mouseWheel(MouseEvent e) {
 
 void mousePressed(MouseEvent e) {
     if (e.getButton() == LEFT) {
-        if (!slider.checkHover()) {
+        if (legend.click()) 
+        	legend.show = !legend.show;
+        else if (!slider.checkHover()) {
             dragging = true;
             dragX = mouseX;
             dragY = mouseY;

@@ -10,7 +10,7 @@ class Legend {
     boolean show = false;
 
     float pad = 0.02 * height;
-    float space = 0.035 * height;
+    float space = 0.034 * height;
 
     float em = 0.005 * width;
 
@@ -21,6 +21,10 @@ class Legend {
 
     float bw = width * 0.02;
     float bh = height * 0.1;
+    
+    
+    color legendColor = color(255);
+    color toggleColor = legendColor;
 
     Legend() {
         lines = new Line[6];
@@ -29,12 +33,40 @@ class Legend {
         }
     }
 
+	boolean click() {
+    	float mx = mouseX;
+    	if (!show) mx += w;
+		return mx >= x + w && mx <= x + w + bw && mouseY >= y && mouseY <= y + bh;
+	}
+
+	void update() {
+		if (this.click()) {
+			toggleColor = color(220);
+		} else {
+			toggleColor = legendColor;
+		} 
+	}
+
     void draw() {
+        if (!show) {
+            pushMatrix();
+            translate(-w, 0);
+        }
         fill(255);
         stroke(150);
         rectMode(CORNER);
         rect(x, y, w, h);
+        fill(toggleColor);
         rect(x+w, y, bw, bh);
+        pushMatrix();
+        fill(txtClr2);
+        textSize(textSize);
+        textAlign(CENTER, CENTER);
+     	translate(x+w+0.5*bw + 0.5*em, y+0.5*bh);
+        rotate(HALF_PI);
+        text("Toggle", 0, 0);
+        popMatrix();
+        
 
         textAlign(LEFT, TOP);
         textSize(titleSize * 1.00);
@@ -156,10 +188,37 @@ class Legend {
         fill(13, 94, 255);
         ellipse(0 , 0, 5*em, 5*em);
         popMatrix();
-
-
+        
+        translate(0, 4 * (hText + space));
+        fill(txtClr);
+        pushMatrix();
+        String[] txt5 = {"Slider: ", "-Displayed year ", "-Displayed year range"};
+        text(txt5[0], 0, 0);
+        fill(txtClr2);
+        translate(2*em, hText + space);
+        text(txt5[1], 0, 0);
+        pushMatrix();
+        translate(0.8*w, 0);
+        //
+        fill(50);
+        stroke(255, 0.4);
+        rectMode(CENTER);
+        rect(0, 0, slider.wSlider, slider.hSlider);
+        popMatrix();
+        translate(0, hText + space);
+        fill(txtClr2);
+        text(txt5[2], 0, 0);
+        fill(255);
+        stroke(0, 0.4);
+        translate(0.8*w, 0);
+        rect(0, 0, slider.wRange, slider.hRange);
+        popMatrix();
 
         popMatrix();
+        
+        if (!show) {
+            popMatrix();
+        }
     }
 }
 

@@ -59,6 +59,7 @@ class Table {
 
 class Row {
     float opacity, opacityTarget, opacitySpeed;
+    float strokeOpacity, strokeOpacitySpeed;
     float diameter, diameterTarget, diameterSpeed;
     color clr;
     float x, y;
@@ -108,17 +109,21 @@ class Row {
         // Bubble opacity
         opacity = 0.0;
         opacityTarget = 0.0;
+        
+        // Stroke opacity
+        strokeOpacity = 0.0;
+        strokeOpacitySpeed = 1.0 / strokeTime;
 	}
 
-	void draw(boolean stroke) {
-    	if (stroke) {
+	void draw() {
+    	if (strokeOpacity > 0.0) {
         	pushStyle();
-        	strokeWeight(0.5);
-        	stroke(0, opacity);
+        	strokeWeight(0.33);
+        	stroke(0, strokeOpacity);
         }
         fill(clr, opacity);
         ellipse(x, y, diameter, diameter);
-        if (stroke) {
+        if (strokeOpacity > 0.0) {
             popStyle();
         }
 	}

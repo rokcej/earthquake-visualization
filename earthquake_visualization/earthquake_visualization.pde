@@ -25,6 +25,7 @@ float minDepth, maxDepth;
 
 float diameterTime = 0.75; // Time for bubbles to scale up/scale down
 float opacityTime = 0.75; // Time for bubbles to change opacity
+float strokeTime = 0.75; // Time for stroke to fade/appear
 
 void setup() {
     size(1600, 800);
@@ -149,6 +150,20 @@ void update() {
             if (row.opacity < row.opacityTarget)
                 row.opacity = row.opacityTarget;
         }
+        // Stroke opacity
+        if (slider.value == row.year) {
+            if (row.strokeOpacity < 1.0) {
+               row.strokeOpacity += dt * row.strokeOpacitySpeed;
+               if (row.strokeOpacity > 1.0)
+                   row.strokeOpacity = 1.0;
+            }
+        } else {
+        	if (row.strokeOpacity > 0.0) {
+               row.strokeOpacity -= dt * row.strokeOpacitySpeed;
+               if (row.strokeOpacity < 0.0)
+                   row.strokeOpacity = 0.0;
+            }
+        }
     }
 }
 
@@ -166,8 +181,12 @@ void drawMap(int wrap) {
     translate(wrap * width, 0);
     shape(map, 0, 0, width, height);
     for (int i = 0; i < data.count; ++i) {
-        if (data.rows[i].diameter > 0.0 && data.rows[i].opacity > 0.0)
-        	data.rows[i].draw(data.rows[i].year == slider.value);
+        if (data.rows[i].year != slider.value && data.rows[i].diameter > 0.0 && data.rows[i].opacity > 0.0)
+        	data.rows[i].draw();
+    }
+    for (int i = 0; i < data.count; ++i) {
+        if (data.rows[i].year == slider.value)
+            data.rows[i].draw();
     }
     //translate(-wrap * width, 0);
     popMatrix();

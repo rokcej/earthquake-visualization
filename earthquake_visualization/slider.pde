@@ -63,9 +63,9 @@ class Slider {
     	rectMode(CENTER);
     	rect(x, y, w, hLine);
     	textAlign(RIGHT, CENTER);
-    	text(min, x0 - 20 + xTxtOff, y + yTxtOff);
+    	text(min, x0 - 20, y + yTxtOff);
     	textAlign(LEFT, CENTER);
-        text(max, x1 + 20 + xTxtOff, y + yTxtOff);
+        text(max, x1 + 20, y + yTxtOff);
         
         float xRangeL = xRangeL(), xRangeR = xRangeR();
         // Range line
@@ -81,7 +81,7 @@ class Slider {
     	fill(50);
     	rect(xSlider, y, wSlider, hSlider);
     	textAlign(CENTER, BOTTOM);
-    	text((range == 0 ? str(value) : str(minRange) + " - " + str(maxRange)), xSlider + xTxtOff, y - hSlider/2);
+    	text((range == 0 ? str(value) : str(minRange) + " - " + str(maxRange)), xSlider, y - hSlider/2);
     }
     
     boolean checkHover() {

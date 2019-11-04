@@ -10,6 +10,8 @@ float scaleStep = 1.2;
 float maxScale = 10.0;
 float minScale = 1.0;
 
+float scrollX, scrollY;
+
 boolean dragging = false;
 float dragX = 0, dragY = 0;
 float posX = 0, posY = 0;
@@ -39,19 +41,27 @@ void setup() {
 
 boolean first = true;
 
-void update() {    
+void update() {
+    // Time
     float timeCurrent = millis();
     float dt = 0.001 * (timeCurrent - timeLast); // Seconds
     timeLast = timeCurrent;
 
     // Move scale
     float diff = scaleTarget - scale;
-    if (diff > 0) {
+    float diffStep = 1 / scale;
+    if (diff > 0) { // Zoom in
         scale += dt * scaleSpeed * scale;
         if (scale > scaleTarget) scale = scaleTarget;
-    } else if (diff < 0) {
+    } else if (diff < 0) { // Zoom out
         scale -= dt * scaleSpeed * scale;
         if (scale < scaleTarget) scale = scaleTarget;
+    }
+    if (diff != 0) {
+   		diffStep *= scale;
+    	// Zoom towards mouse position
+        posX += (width * 0.5 / scale) * (diffStep - 1) * lerp(1, -1, (float)scrollX / (float)width);
+        posY += (height * 0.5 / scale) * (diffStep - 1) * lerp(1, -1, (float)scrollY / (float)height);
     }
 
     // Drag
@@ -62,7 +72,7 @@ void update() {
         dragY = mouseY;
     }
 
-    // Make sure the map stays within the frame with a certain maximum offset
+    // Make sure the map stays within the frame
     // Get positions of map corners
 	float x0 = width - (2*posX + width/scale);
 	float y0 = height - (2*posY + height/scale);
@@ -178,7 +188,8 @@ void drawMap(int wrap) {
     translate(-0.5*width, -0.5*height);
     // Translate
     translate(posX, posY);
-    translate(wrap * width, 0);
+    if (wrap != 0)
+    	translate(wrap * width, 0);
     shape(map, 0, 0, width, height);
     for (int i = 0; i < data.count; ++i) {
         if (data.rows[i].year != slider.value && data.rows[i].diameter > 0.0 && data.rows[i].opacity > 0.0)
@@ -236,6 +247,9 @@ void mouseWheel(MouseEvent e) {
     } else if (scaleTarget > maxScale) { 
         scaleTarget = maxScale;
     }
+    
+    scrollX = mouseX;
+    scrollY = mouseY;
 }
 
 void mousePressed(MouseEvent e) {

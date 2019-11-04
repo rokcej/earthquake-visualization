@@ -65,6 +65,7 @@ class Row {
     float x, y;
     
 	int year, month, day;
+	String time;
 	float latitude, longitude; // Degrees
 	String type;
 	float depth; // Kilometers
@@ -78,6 +79,8 @@ class Row {
 		this.day = int(date[1]);
 		this.month = int(date[0]);
 		this.year = int(date[2]);
+		// Time
+		this.time = fields[1];
 		// Coord
 		this.latitude = float(fields[2]);
 		this.longitude = float(fields[3]);

@@ -54,6 +54,7 @@ class Slider {
     }
     
     void draw() {
+        noStroke();
         float xTxtOff = 2, yTxtOff = -2;
         
         float xSlider = xSlider();

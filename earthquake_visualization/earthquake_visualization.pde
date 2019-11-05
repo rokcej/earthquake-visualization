@@ -37,10 +37,10 @@ Row highlight = null;
 int highlightWrap = 0;
 
 void setup() {
-    size(1600, 800);
+    size(1600, 800); // Must be 2:1, but works for any resolution
     colorMode(RGB, 255, 255, 255, 1.0);
 	
-    map = loadShape("world_map_simplified_x2.svg");
+    map = loadShape("world_map_simplified.svg");
     map.disableStyle();
     data = new Table("earthquake_data.csv", true);
     slider = new Slider(0.5*width, 0.9*height, 0.8*width, data.minYear, data.maxYear);

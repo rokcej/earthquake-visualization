@@ -100,23 +100,23 @@ class Row {
     // Set row parameters
 	void analyze(Table data) {
     	// Bubble diameter
-        diameterTarget = lerp(4, 50, (magnitude - data.minMagnitude) / (data.maxMagnitude - data.minMagnitude));
+        diameterTarget = lerp(bubbleSizeMin, bubbleSizeMax, (magnitude - data.minMagnitude) / (data.maxMagnitude - data.minMagnitude));
         diameter = 0.0;
         diameterSpeed = diameterTarget / diameterTime;
 
 		// Bubble color
 		pushStyle();
         colorMode(HSB, 360, 1, 1, 1);
-        float hue = 0;
+        float hue = 0; // Red
         float minBrightness = 0.4;
         float maxBrightness = 1.0;
         float saturation = 0.95;
         if (!isEarthquake) {
         	if (isNuclear) {
-            	hue = 50;
+            	hue = 50; // Yellow
             	minBrightness = 0.9;
             	saturation = 1.0;
-        	} else hue = 220;
+        	} else hue = 270; // Purple
         }
         clr = color(hue, saturation, lerp(minBrightness, maxBrightness, (depth - data.minDepth) / (data.maxDepth - data.minDepth)));
         popStyle();
@@ -138,7 +138,7 @@ class Row {
 	void draw() {
     	if (strokeOpacity > 0.0) {
         	pushStyle();
-        	strokeWeight(0.33);
+        	strokeWeight(bubbleStrokeWeight);
         	stroke(0, strokeOpacity);
         }
         

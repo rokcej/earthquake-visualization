@@ -73,7 +73,7 @@ class Slider {
         float xRangeL = xRangeL(), xRangeR = xRangeR();
         // Range line
         //fill(255, 181, 8);
-        strokeWeight(1.0);
+        strokeWeight(defaultStrokeWeight);
         fill(255);
         stroke(0, 0.4);
         rect((xRangeL + xRangeR)*0.5, y, xRangeL - xRangeR, hLineRange);

@@ -2,8 +2,15 @@ PShape map;
 int mapWrap = 0;
 
 PShape nuclear;
+PShape arrow;
 
 Table data;
+
+float defaultStrokeWeight;
+
+float bubbleSizeMin;
+float bubbleSizeMax;
+float bubbleStrokeWeight;
 
 float scale = 1.0;
 float scaleTarget = 1.0;
@@ -37,17 +44,28 @@ Row highlight = null;
 int highlightWrap = 0;
 
 void setup() {
-    size(1600, 800); // Must be 2:1, but works for any resolution
+    size(1800, 900); // Must be 2:1, but works for any resolution
     colorMode(RGB, 255, 255, 255, 1.0);
-	
+
+    // Set bubble size
+    bubbleSizeMin = (float)width / 400.0;
+    bubbleSizeMax = (float)width / 32.0;
+    bubbleStrokeWeight = (float)width / 4800.0;
+    
+    // Set default stroke weight
+    defaultStrokeWeight = (float)width / 1600;
+
     map = loadShape("world_map_simplified.svg");
     map.disableStyle();
     data = new Table("earthquake_data.csv", true);
     slider = new Slider(0.5*width, 0.9*height, 0.8*width, data.minYear, data.maxYear);
-    
+
     nuclear = loadShape("nuclear.svg");
     nuclear.disableStyle();
-    
+
+    arrow = loadShape("arrow.svg");
+    arrow.disableStyle();
+
     legend = new Legend();
 
     timeLast = millis();
@@ -55,7 +73,7 @@ void setup() {
 
 boolean first = true;
 
-void update() {
+void update() {    
     // Time
     float timeCurrent = millis();
     float dt = 0.001 * (timeCurrent - timeLast); // Seconds
@@ -188,7 +206,8 @@ void update() {
             }
         }
     }
-    legend.update();
+
+    legend.update(dt);
 }
 
 void drawMap(int wrap) {
@@ -213,32 +232,39 @@ void drawMap(int wrap) {
     shape(map, 0, 0, width, height);
     // Draw equator
     stroke(0, 0, 0, 0.25);
-    strokeWeight(0.25);
+    strokeWeight(defaultStrokeWeight * 0.25);
     line(0, 0.5*height, width, 0.5*height);
     noStroke();
     // Draw bubbles
+    // Bubbles within year range
     for (int i = 0; i < data.count; ++i) {
         if (data.rows[i].year != slider.value && data.rows[i].diameter > 0.0 && data.rows[i].opacity > 0.0) {
             data.rows[i].draw();
-            if (dist(mx, my, data.rows[i].x, data.rows[i].y) < data.rows[i].diameter * 0.5)
-                highlight = data.rows[i];
+            if (dist(mx, my, data.rows[i].x, data.rows[i].y) < data.rows[i].diameter * 0.5) {
+                highlight = data.rows[i];   
+                highlightWrap = wrap;
+            }
         }
     }
+    // Bubbles for current year
     for (int i = 0; i < data.count; ++i) {
         if (data.rows[i].year == slider.value) {
             data.rows[i].draw();
-            if (dist(mx, my, data.rows[i].x, data.rows[i].y) < data.rows[i].diameter * 0.5)
+            if (dist(mx, my, data.rows[i].x, data.rows[i].y) < data.rows[i].diameter * 0.5) {
                 highlight = data.rows[i];
+                highlightWrap = wrap;
+            }
         }
     }
+
     // Highlight selected bubble
     if (highlight != null) {
         fill(255, 255, 200, 0.4);
         stroke(255, 255, 0);
-        strokeWeight(1.0);
+        strokeWeight(bubbleStrokeWeight * 3.0);
         ellipse(highlight.x, highlight.y, highlight.diameter, highlight.diameter);
-        highlightWrap = wrap;
     }
+
     popMatrix();
 }
 
@@ -246,7 +272,6 @@ void draw() {
     update();
 
     background(250);
-    //background(232, 245, 255);
 
     // Map
     highlight = null;
@@ -255,19 +280,21 @@ void draw() {
         drawMap(mapWrap);
     }
 
-    // UI
+    /// UI
+    // FPS
+    // text(frameRate, 0, 0);
     // Slider
     slider.draw();
     textAlign(LEFT, TOP);
-    // text(frameRate, 0, 0); // Show FPS
-	// Tooltip
-	if (highlight != null) {
-        float hx = ((highlight.x + mapWrap*width + posX - 0.5*width) * scale + 0.5*width);
-        if (hx > width) hx -= width;
-        if (hx < 0) hx += width;
+
+    // Tooltip
+    if (highlight != null) {
+        float hx = ((highlight.x + highlightWrap*width + posX - 0.5*width) * scale + 0.5*width);
         float hy = (highlight.y + posY - 0.5*height) * scale + 0.5*height;
+        // Draw tooltip
         tooltip(highlight, hx, hy);
     }
+
     // Legend
     legend.draw();
 
@@ -296,7 +323,9 @@ void mouseWheel(MouseEvent e) {
 void mousePressed(MouseEvent e) {
     if (e.getButton() == LEFT) {
         if (legend.click()) 
-        	legend.show = !legend.show;
+            legend.show = !legend.show;
+        else if (legend.hover())
+            return;
         else if (!slider.checkHover()) {
             dragging = true;
             dragX = mouseX;

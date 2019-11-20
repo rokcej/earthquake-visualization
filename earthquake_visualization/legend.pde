@@ -7,24 +7,28 @@ class Legend {
     color txtClr = color(20);
     color txtClr2 = color(85);
 
-    boolean show = false;
-
     float pad = 0.02 * height;
     float space = 0.034 * height;
 
     float em = 0.005 * width;
 
-    float w = width * 0.25;
-    float h = height * 0.75;
-    float x = 0.0;
-    float y = 0.05 * height;
+    float w = width * 0.25; // Legend width
+    float h = height * 0.75; // Legend height
+    
+    float x0 = -w - defaultStrokeWeight; // x when hidden
+    float x1 = -defaultStrokeWeight; // x when shown
+    float x = x0; // Current x
+    float y = 0.05 * height; // Current y
 
-    float bw = width * 0.02;
-    float bh = height * 0.1;
+    float bw = width * 0.016; // Button width
+    float bh = height * 0.08; // Button height
     
+    boolean show = false;
+    float showSpeed = w * 2.0;
     
-    color legendColor = color(255);
-    color toggleColor = legendColor;
+    color legendColor = color(255, 0.98);
+    color buttonColor = legendColor;
+    color hoverColor = color(220, 0.99);;
 
     Legend() {
         lines = new Line[6];
@@ -34,39 +38,46 @@ class Legend {
     }
 
 	boolean click() {
-    	float mx = mouseX;
-    	if (!show) mx += w;
-		return mx >= x + w && mx <= x + w + bw && mouseY >= y && mouseY <= y + bh;
+		return mouseX >= x + w && mouseX <= x + w + bw && mouseY >= y && mouseY <= y + bh;
 	}
 
-	void update() {
+	boolean hover() {
+		return mouseX >= x && mouseX <= x+w && mouseY >= y && mouseY <= y+h || this.click();
+	}
+
+	void update(float dt) {
 		if (this.click()) {
-			toggleColor = color(220);
+			this.buttonColor = this.hoverColor;
 		} else {
-			toggleColor = legendColor;
-		} 
+			this.buttonColor = this.legendColor;
+		}
+		
+		if (this.show && x < x1) {
+    		x += showSpeed * dt;
+    		if (x > x1) x = x1;
+		} else if (!this.show && x > x0) {
+			x -= showSpeed * dt;
+			if (x < x0) x = x0;
+		}
 	}
 
     void draw() {
-        if (!show) {
-            pushMatrix();
-            translate(-w, 0);
-        }
-        fill(255);
+        strokeWeight(defaultStrokeWeight);
+        fill(legendColor);
         stroke(150);
         rectMode(CORNER);
         rect(x, y, w, h);
-        fill(toggleColor);
+        fill(buttonColor);
         rect(x+w, y, bw, bh);
-        pushMatrix();
-        fill(txtClr2);
-        textSize(textSize);
-        textAlign(CENTER, CENTER);
-     	translate(x+w+0.5*bw + 0.5*em, y+0.5*bh);
-        rotate(HALF_PI);
-        text("Toggle", 0, 0);
-        popMatrix();
         
+        fill(txtClr2);
+        noStroke();
+        shapeMode(CORNER);
+        if (show)
+        	shape(arrow, x+w, y, bw, bh);
+        else
+        	shape(arrow, x+w+bw, y, -bw, bh);
+       
 
         textAlign(LEFT, TOP);
         textSize(titleSize * 1.00);
@@ -117,7 +128,7 @@ class Legend {
         translate(textWidth(txt2[1]) + em, 0);
         float gradLen = 17*em;
         for (int i = 0; i < gradLen; ++i) {
-            strokeWeight(1.0);
+            strokeWeight(defaultStrokeWeight);
             stroke(lerpColor(color(102, 5, 5), color(255, 13, 13), (float)i/gradLen));
             line(i, 1.5*em, i, -1.5*em);
         }
@@ -185,7 +196,7 @@ class Legend {
         fill(255, 0, 0);
         stroke(0);
         translate(0.8*w, 0);
-        fill(13, 94, 255);
+        fill(134, 13, 255);
         ellipse(0 , 0, 5*em, 5*em);
         popMatrix();
         
@@ -215,10 +226,6 @@ class Legend {
         popMatrix();
 
         popMatrix();
-        
-        if (!show) {
-            popMatrix();
-        }
     }
 }
 

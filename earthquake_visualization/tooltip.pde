@@ -1,8 +1,8 @@
 void tooltip(Row r, float cx, float cy) {
     textSize(height * 0.02);
-    float xPad = 8; // X padding
-    float yPad = 6; // Y padding
-    float spacing = 2; // Line spacing
+    float xPad = height * 0.012; // X padding
+    float yPad = xPad * 0.75; // Y padding
+    float spacing = yPad * 0.33; // Line spacing
     
     String[] keys = {
     	"Date: ",

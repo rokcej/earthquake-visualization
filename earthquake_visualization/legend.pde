@@ -10,9 +10,9 @@ class Legend {
     float pad = 0.02 * height;
     float space = 0.034 * height;
 
-    float em = 0.005 * width;
+    float em = 0.01 * height;
 
-    float w = width * 0.25; // Legend width
+    float w = height * 0.5; // Legend width
     float h = height * 0.75; // Legend height
     
     float x0 = -w - defaultStrokeWeight; // x when hidden
@@ -20,8 +20,8 @@ class Legend {
     float x = x0; // Current x
     float y = 0.05 * height; // Current y
 
-    float bw = width * 0.016; // Button width
     float bh = height * 0.08; // Button height
+    float bw = bh * 0.4; // Button width
     
     boolean show = false;
     float showSpeed = w * 2.0;

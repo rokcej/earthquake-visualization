@@ -8,7 +8,7 @@ class Slider {
     boolean draggingRangeR = false;
     
     float x0, x1;
-    float wSlider = 0.012 * width, hSlider = 0.045 * height;
+    float hSlider = 0.045 * height, wSlider = hSlider * 0.5;
     float wRange = wSlider * 0.5, hRange = hSlider * 0.66;
     int range = 0; // Display values [-range, range]
     float hLine = height * 0.006, hLineRange = hLine * 1.2;
@@ -66,9 +66,9 @@ class Slider {
     	rect(x, y, w, hLine);
     	textAlign(RIGHT, TOP);
         fill(0, 0.7);
-    	text(min, x0 - width * 0.015, y - dy);
+    	text(min, x0 - wRange*2.5, y - dy);
     	textAlign(LEFT, TOP);
-        text(max, x1 + width * 0.015, y - dy);
+        text(max, x1 + wRange*2.5, y - dy);
         
         float xRangeL = xRangeL(), xRangeR = xRangeR();
         // Range line
@@ -94,7 +94,7 @@ class Slider {
     	textAlign(CENTER, BOTTOM);
     	String content = (range == 0 ? str(value) : str(minRange) + " - " + str(maxRange));
         fill(255);
-        text(content, xSlider + 0.0005*width, y - hSlider/2 + 0.0008*height);
+        text(content, xSlider + 0.001*height, y - hSlider/2 + 0.0008*height);
         fill(50);
     	text(content, xSlider, y - hSlider/2);
     }

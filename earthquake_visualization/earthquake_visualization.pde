@@ -1,17 +1,8 @@
+/// Map
 PShape map;
 int mapWrap = 0;
 
-PShape nuclear;
-PShape arrow;
-
-Table data;
-
-float defaultStrokeWeight;
-
-float bubbleSizeMin;
-float bubbleSizeMax;
-float bubbleStrokeWeight;
-
+// Map scaling parameters
 float scale = 1.0;
 float scaleTarget = 1.0;
 float scaleSpeed = 2.0;
@@ -19,18 +10,34 @@ float scaleStep = 1.2;
 float maxScale = 10.0;
 float minScale = 1.0;
 
+// Map scrolling
 float scrollX, scrollY; // Mouse position when scrolling
 
+// Map dragging
 boolean dragging = false;
 float dragX = 0, dragY = 0;
 float posX = 0, posY = 0;
 float maxXOffset = 0.1;
 float maxYOffset = 0.0;
 
-float timeLast;
+// Icons
+PShape nuclear;
+PShape arrow;
 
+// Objects
+Table data;
 Slider slider;
+Legend legend;
 
+// Used stroke weight
+float defaultStrokeWeight;
+
+// Bubble design
+float bubbleSizeMin;
+float bubbleSizeMax;
+float bubbleStrokeWeight;
+
+// Bubble animation parameters
 float diameterTime = 0.75; // Time for bubbles to scale up/scale down
 float opacityTime = 0.75; // Time for bubbles to change opacity
 float strokeTime = 0.75; // Time for stroke to fade/appear
@@ -38,13 +45,16 @@ float strokeTime = 0.75; // Time for stroke to fade/appear
 float minOpacity = 0.05;
 float maxOpacity = 0.4;
 
-Legend legend;
+float timeLast; // Frame timer
 
-Row highlight = null;
+Row highlight = null; // Selected bubble
 int highlightWrap = 0;
 
 void setup() {
-    size(1800, 900); // Must be 2:1, but works for any resolution
+    // Resolution
+    size(1600, 900); // Ratio must be 2:1, but works for any resolution
+    
+    // Project colour mode
     colorMode(RGB, 255, 255, 255, 1.0);
 
     // Set bubble size
@@ -55,17 +65,17 @@ void setup() {
     // Set default stroke weight
     defaultStrokeWeight = (float)width / 1600;
 
+	// Load shapes
     map = loadShape("world_map_simplified.svg");
     map.disableStyle();
-    data = new Table("earthquake_data.csv", true);
-    slider = new Slider(0.5*width, 0.9*height, 0.8*width, data.minYear, data.maxYear);
-
     nuclear = loadShape("nuclear.svg");
     nuclear.disableStyle();
-
     arrow = loadShape("arrow.svg");
     arrow.disableStyle();
-
+    
+    // Create objects
+    data = new Table("earthquake_data.csv", true);
+    slider = new Slider(0.5*width, 0.9*height, 0.8*width, data.minYear, data.maxYear);
     legend = new Legend();
 
     timeLast = millis();
@@ -73,7 +83,7 @@ void setup() {
 
 boolean first = true;
 
-void update() {    
+void update() {
     // Time
     float timeCurrent = millis();
     float dt = 0.001 * (timeCurrent - timeLast); // Seconds
@@ -256,7 +266,6 @@ void drawMap(int wrap) {
             }
         }
     }
-
     // Highlight selected bubble
     if (highlight != null) {
         fill(255, 255, 200, 0.4);

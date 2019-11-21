@@ -122,9 +122,9 @@ class Row {
         popStyle();
         
         // Bubble position
-        x = (longitude + 180.0f) * width / 360.0f;
-        y = (latitude + 90.0f) * height / 180.0f;
-        y = height - y; // Upside down
+        x = (longitude + 180.0f) * mapWidth / 360.0f + (width - mapWidth)*0.5;
+        y = (latitude + 90.0f) * mapHeight / 180.0f;
+        y = mapHeight - y; // Upside down
         
         // Bubble opacity
         opacity = 0.0;

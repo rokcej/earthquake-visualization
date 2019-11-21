@@ -1,6 +1,14 @@
+// Map resolution and drawing position
+float mapWidth, mapHeight;
+float mapX;
+
 /// Map
-PShape map;
-int mapWrap = 0;
+color mapBackgroundColour = color(250);
+color mapFillColour = color(180);
+
+// Map wrapping
+int mapWrapRight = 0;
+int mapWrapLeft = 0;
 
 // Map scaling parameters
 float scale = 1.0;
@@ -20,7 +28,8 @@ float posX = 0, posY = 0;
 float maxXOffset = 0.1;
 float maxYOffset = 0.0;
 
-// Icons
+// Shapes
+PShape map;
 PShape nuclear;
 PShape arrow;
 
@@ -28,9 +37,6 @@ PShape arrow;
 Table data;
 Slider slider;
 Legend legend;
-
-// Used stroke weight
-float defaultStrokeWeight;
 
 // Bubble design
 float bubbleSizeMin;
@@ -41,38 +47,42 @@ float bubbleStrokeWeight;
 float diameterTime = 0.75; // Time for bubbles to scale up/scale down
 float opacityTime = 0.75; // Time for bubbles to change opacity
 float strokeTime = 0.75; // Time for stroke to fade/appear
-
 float minOpacity = 0.05;
 float maxOpacity = 0.4;
 
+// Other
+float defaultStrokeWeight; // Used stroke 
+boolean isHighlighted = true; // If a bubble is already highlighted
 float timeLast; // Frame timer
-
-Row highlight = null; // Selected bubble
-int highlightWrap = 0;
 
 void setup() {
     // Resolution
-    size(1600, 900); // Ratio must be 2:1, but works for any resolution
+    size(1800, 900); // Ratio must be 2:1, but works for any resolution
     
+    // Map parameters
+    mapHeight = height; 
+    mapWidth = 2 * height;
+    mapX = (width - mapWidth) * 0.5;
+
     // Project colour mode
     colorMode(RGB, 255, 255, 255, 1.0);
 
     // Set bubble size
-    bubbleSizeMin = (float)width / 400.0;
-    bubbleSizeMax = (float)width / 32.0;
-    bubbleStrokeWeight = (float)width / 4800.0;
-    
-    // Set default stroke weight
-    defaultStrokeWeight = (float)width / 1600;
+    bubbleSizeMin = (float)height / 200.0;
+    bubbleSizeMax = (float)height / 16.0;
+    bubbleStrokeWeight = (float)height / 2400.0;
 
-	// Load shapes
+    // Set default stroke weight
+    defaultStrokeWeight = (float)height / 800;
+
+    // Load shapes
     map = loadShape("world_map_simplified.svg");
     map.disableStyle();
     nuclear = loadShape("nuclear.svg");
     nuclear.disableStyle();
     arrow = loadShape("arrow.svg");
     arrow.disableStyle();
-    
+
     // Create objects
     data = new Table("earthquake_data.csv", true);
     slider = new Slider(0.5*width, 0.9*height, 0.8*width, data.minYear, data.maxYear);
@@ -102,8 +112,8 @@ void update() {
     if (diff != 0) {
         diffStep *= scale;
         // Zoom towards mouse position
-        posX += (width * 0.5 / scale) * (diffStep - 1) * lerp(1, -1, (float)scrollX / (float)width);
-        posY += (height * 0.5 / scale) * (diffStep - 1) * lerp(1, -1, (float)scrollY / (float)height);
+        posX += (mapWidth * 0.5 / scale) * (diffStep - 1) * lerp(1, -1, (float)scrollX / (float)mapWidth);
+        posY += (mapHeight * 0.5 / scale) * (diffStep - 1) * lerp(1, -1, (float)scrollY / (float)mapHeight);
     }
 
     // Drag
@@ -116,41 +126,35 @@ void update() {
 
     // Make sure the map stays within the frame
     // Get positions of map corners
-    float x0 = width - (2*posX + width/scale);
-    float y0 = height - (2*posY + height/scale);
-    float x1 = width/scale - 2*posX;
-    float y1 = height/scale - 2*posY;
+    float x0 = (2*posX + mapWidth/scale - 2*mapWidth + width) * 0.5 * scale;
+    float y0 = mapHeight - (2*posY + mapHeight/scale);
+    float x1 = x0 + mapWidth * scale;
+    float y1 = mapHeight/scale - 2*posY;
 
-    // Wrap coordinates
-    boolean wrapped = false;
-    if (x0 < -2*width) {
-        posX -= width;
-        wrapped = true;
-    } else if (x1 > 3*width) {
-        posX += width;
-        wrapped = true;
-    }
-    // Recalculate x0 and x1
-    if (wrapped) {
-        x0 = width - (2*posX + width/scale);
-        x1 = width/scale - 2*posX;
-    }
-
-    // Check if the map has to be duplicated horizontally
-    if (x0 < 0.0) {
-        mapWrap = -1;
-        //posX = (width - width/scale)/2;
-    } else if (x1 > width) {
-        mapWrap = 1;
-        //posX = (width/scale - width)/2;
-    } else {
-        mapWrap = 0;
-    }
+	// Wrap coordinates if map is off-screen and update position
+	if (x0 > width) {
+		posX -= mapWidth;
+		x0 -= mapWidth * scale;
+		x1 -= mapWidth * scale;
+	} else if (x1 < 0.0) {
+		posX += mapWidth;
+		x0 += mapWidth * scale;
+        x1 += mapWidth * scale;
+	}
+    
+	// Check if the map has to be duplicated horizontally
+	mapWrapLeft = 0;
+	for (int i = 0; x0 - i*mapWidth > 0.0; ++i)
+		++mapWrapLeft;
+	mapWrapRight = 0;
+    for (int i = 0; x1 + i*mapWidth < width; ++i)
+        ++mapWrapRight;
+	
     // Contain the map within the frame vertically
     if (y0 < 0.0) {
-        posY = (height - height/scale)/2;
-    } else if (y1 > height) {
-        posY = (height/scale - height)/2;
+        posY = (mapHeight - mapHeight/scale)/2;
+    } else if (y1 > mapHeight) {
+        posY = (mapHeight/scale - mapHeight)/2;
     }
 
     int rangePrev = slider.range, valuePrev = slider.value;
@@ -217,92 +221,104 @@ void update() {
         }
     }
 
+	// Update legend
     legend.update(dt);
 }
 
-void drawMap(int wrap) {
+void drawMap(int wrap) { // Wrap means how many map lengts to move the map on the x-axis
     shapeMode(CORNER);
     noStroke();
-    fill(180);
+    fill(mapFillColour);
 
-    float mx = (mouseX - 0.5*width) / scale + 0.5*width - posX - wrap*width;
-    float my = (mouseY - 0.5*height) / scale + 0.5*height - posY;
-
-    pushMatrix();
+	// Transform mouse coordinates into map coordinates
+    float mx = (mouseX - 0.5*mapWidth) / scale + 0.5*mapWidth - posX - wrap*mapWidth;
+    float my = (mouseY - 0.5*mapHeight) / scale + 0.5*mapHeight - posY;
+    
+    pushMatrix(); // Start map transform
+    
     // Scale
-    translate(0.5*width, 0.5*height);
+    translate(0.5*mapWidth, 0.5*mapHeight);
     scale(scale);
-    translate(-0.5*width, -0.5*height);
+    translate(-0.5*mapWidth, -0.5*mapHeight);
     // Translate
     translate(posX, posY);
-    if (wrap != 0) {
-        translate(wrap * width, 0);
-    }
+    if (wrap != 0)
+        translate(wrap * mapWidth, 0);
+        
     // Draw map
-    shape(map, 0, 0, width, height);
+    shape(map, mapX, 0, mapWidth, mapHeight);
+    
     // Draw equator
     stroke(0, 0, 0, 0.25);
     strokeWeight(defaultStrokeWeight * 0.25);
-    line(0, 0.5*height, width, 0.5*height);
+    line(mapX, 0.5*mapHeight, mapX + mapWidth, 0.5*mapHeight);
     noStroke();
-    // Draw bubbles
+    
+    /// Draw bubbles
     // Bubbles within year range
+    Row highlight = null; // Highlighted bubble
     for (int i = 0; i < data.count; ++i) {
         if (data.rows[i].year != slider.value && data.rows[i].diameter > 0.0 && data.rows[i].opacity > 0.0) {
             data.rows[i].draw();
             if (dist(mx, my, data.rows[i].x, data.rows[i].y) < data.rows[i].diameter * 0.5) {
-                highlight = data.rows[i];   
-                highlightWrap = wrap;
+                highlight = data.rows[i];
             }
         }
     }
+    
     // Bubbles for current year
     for (int i = 0; i < data.count; ++i) {
         if (data.rows[i].year == slider.value) {
             data.rows[i].draw();
             if (dist(mx, my, data.rows[i].x, data.rows[i].y) < data.rows[i].diameter * 0.5) {
                 highlight = data.rows[i];
-                highlightWrap = wrap;
             }
         }
     }
+    
     // Highlight selected bubble
-    if (highlight != null) {
-        fill(255, 255, 200, 0.4);
-        stroke(255, 255, 0);
+    if (!isHighlighted && highlight != null) {
+        isHighlighted = true;
+        fill(255, 255, 200, 0.4); // Bright yellow
+        stroke(255, 255, 0); // Yellow
         strokeWeight(bubbleStrokeWeight * 3.0);
         ellipse(highlight.x, highlight.y, highlight.diameter, highlight.diameter);
+    
+    	popMatrix(); // End map transform
+    
+        float hx = ((highlight.x + wrap*mapWidth + posX - 0.5*mapWidth) * scale + 0.5*mapWidth);
+        float hy = (highlight.y + posY - 0.5*mapHeight) * scale + 0.5*mapHeight;
+        // Draw tooltip
+        tooltip(highlight, hx, hy);
+    } else {
+    
+    	popMatrix(); // End map transform
+    
     }
-
-    popMatrix();
 }
 
 void draw() {
-    update();
+    update(); // Call update before draw
 
-    background(250);
+    background(mapBackgroundColour);
 
-    // Map
-    highlight = null;
+    /// Map
+    isHighlighted = false;
     drawMap(0);
-    if (mapWrap != 0) {
-        drawMap(mapWrap);
-    }
+    for (int i = 1; i <= mapWrapLeft; ++i)
+        drawMap(-i);
+    for (int i = 1; i <= mapWrapRight; ++i)
+    	drawMap(i);
 
     /// UI
     // FPS
-    // text(frameRate, 0, 0);
+    fill(0);
+    textAlign(LEFT, TOP);
+    text(frameRate, 0, 0);
+    
     // Slider
     slider.draw();
     textAlign(LEFT, TOP);
-
-    // Tooltip
-    if (highlight != null) {
-        float hx = ((highlight.x + highlightWrap*width + posX - 0.5*width) * scale + 0.5*width);
-        float hy = (highlight.y + posY - 0.5*height) * scale + 0.5*height;
-        // Draw tooltip
-        tooltip(highlight, hx, hy);
-    }
 
     // Legend
     legend.draw();

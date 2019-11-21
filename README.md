@@ -2,6 +2,8 @@
 A tool for visualizing earthquakes between 1965 and 2016 on the world map.  
 Written in [Processing](https://processing.org/).  
 
+![Screenshot](docs/screenshot.jpg "Screenshot")
+
 ## Motivation
 What do earthquakes look like if we display all of them at once on a map? Is there a certain pattern?  
 Are some locations more susceptible to earthquakes than others? If so, which ones?  
@@ -18,6 +20,7 @@ The visualization makes it very simple to determine whether an earthquake is lik
 * Displaying earthquake details when hovering over the corresponding bubble
 * Displaying earthquakes for a specific year, or for a range of several years
 * Togglable legend
+* Supports any resolution
 
 ## Sources
 * [Dataset source](https://www.kaggle.com/usgs/earthquake-database)

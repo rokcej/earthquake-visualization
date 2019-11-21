@@ -33,7 +33,7 @@ PShape map;
 PShape nuclear;
 PShape arrow;
 
-// Objects
+// UI Objects
 Table data;
 Slider slider;
 Legend legend;
@@ -50,15 +50,18 @@ float strokeTime = 0.75; // Time for stroke to fade/appear
 float minOpacity = 0.05;
 float maxOpacity = 0.4;
 
+// Bubble highlight
+Row highlight;
+float highlightWrap;
+
 // Other
 float defaultStrokeWeight; // Used stroke 
-boolean isHighlighted = true; // If a bubble is already highlighted
 float timeLast; // Frame timer
 boolean first = true; // Flag for first iteration
 
 void setup() {
     // Resolution
-    size(1800, 900); // Custom resolution
+    size(1280, 720); // Custom resolution
     //fullScreen(); // Fullscreen mode
     
     // Map parameters
@@ -260,13 +263,13 @@ void drawMap(int wrap) { // Wrap means how many map lengts to move the map on th
     noStroke();
     
     /// Draw bubbles
-    // Bubbles within year range
-    Row highlight = null; // Highlighted bubble
+    // Bubbles within year range 
+    Row currentHighlight = null;
     for (int i = 0; i < data.count; ++i) {
         if (data.rows[i].year != slider.value && data.rows[i].diameter > 0.0 && data.rows[i].opacity > 0.0) {
             data.rows[i].draw();
             if (dist(mx, my, data.rows[i].x, data.rows[i].y) < data.rows[i].diameter * 0.5) {
-                highlight = data.rows[i];
+                currentHighlight = data.rows[i];
             }
         }
     }
@@ -276,30 +279,18 @@ void drawMap(int wrap) { // Wrap means how many map lengts to move the map on th
         if (data.rows[i].year == slider.value) {
             data.rows[i].draw();
             if (dist(mx, my, data.rows[i].x, data.rows[i].y) < data.rows[i].diameter * 0.5) {
-                highlight = data.rows[i];
+                currentHighlight = data.rows[i];
             }
         }
     }
     
     // Highlight selected bubble
-    if (!isHighlighted && highlight != null) {
-        isHighlighted = true;
-        fill(255, 255, 200, 0.4); // Bright yellow
-        stroke(255, 255, 0); // Yellow
-        strokeWeight(bubbleStrokeWeight * 3.0);
-        ellipse(highlight.x, highlight.y, highlight.diameter, highlight.diameter);
-    
-    	popMatrix(); // End map transform
-    
-        float hx = ((highlight.x + wrap*mapWidth + posX - 0.5*mapWidth) * scale + 0.5*mapWidth);
-        float hy = (highlight.y + posY - 0.5*mapHeight) * scale + 0.5*mapHeight;
-        // Draw tooltip
-        tooltip(highlight, hx, hy);
-    } else {
-    
-    	popMatrix(); // End map transform
-    
+    if (currentHighlight != null) {
+        highlight = currentHighlight;
+        highlightWrap = wrap;        
     }
+    
+    popMatrix(); // End map transform
 }
 
 void drawFPS() {
@@ -314,12 +305,26 @@ void draw() {
     background(mapBackgroundColour);
 
     /// Map
-    isHighlighted = false;
+    highlight = null;
     drawMap(0);
     for (int i = 1; i <= mapWrapLeft; ++i)
         drawMap(-i);
     for (int i = 1; i <= mapWrapRight; ++i)
     	drawMap(i);
+    // Draw tooltip for highlighted bubble
+    if (highlight != null) {
+    	float hx = ((highlight.x + highlightWrap*mapWidth + posX - 0.5*mapWidth) * scale + 0.5*mapWidth);
+        float hy = (highlight.y + posY - 0.5*mapHeight) * scale + 0.5*mapHeight;
+        // Draw highlight
+        fill(255, 255, 200, 0.4); // Bright yellow
+        stroke(255, 255, 0); // Yellow
+        strokeWeight(bubbleStrokeWeight * 3.0 * scale);
+        float diameter = highlight.diameter * scale;
+        ellipse(hx, hy, diameter, diameter);
+        
+        // Draw tooltip
+        tooltip(highlight, hx, hy);
+    }
 
     /// UI
     //drawFPS();

@@ -8,7 +8,7 @@ class Legend {
     color txtClr2 = color(85);
 
     float pad = 0.02 * height;
-    float space = 0.034 * height;
+    float space = 0.033 * height;
 
     float em = 0.01 * height;
 

@@ -54,10 +54,12 @@ float maxOpacity = 0.4;
 float defaultStrokeWeight; // Used stroke 
 boolean isHighlighted = true; // If a bubble is already highlighted
 float timeLast; // Frame timer
+boolean first = true; // Flag for first iteration
 
 void setup() {
     // Resolution
-    size(1800, 900); // Ratio must be 2:1, but works for any resolution
+    size(1800, 900); // Custom resolution
+    //fullScreen(); // Fullscreen mode
     
     // Map parameters
     mapHeight = height; 
@@ -91,8 +93,6 @@ void setup() {
     timeLast = millis();
 }
 
-boolean first = true;
-
 void update() {
     // Time
     float timeCurrent = millis();
@@ -109,27 +109,30 @@ void update() {
         scale -= dt * scaleSpeed * scale;
         if (scale < scaleTarget) scale = scaleTarget;
     }
+    
+    float invScale = 1 / scale; // For optimization
+    
     if (diff != 0) {
         diffStep *= scale;
         // Zoom towards mouse position
-        posX += (mapWidth * 0.5 / scale) * (diffStep - 1) * lerp(1, -1, (float)scrollX / (float)mapWidth);
-        posY += (mapHeight * 0.5 / scale) * (diffStep - 1) * lerp(1, -1, (float)scrollY / (float)mapHeight);
+        posX += (mapWidth * 0.5 * invScale) * (diffStep - 1) * lerp(1, -1, (float)scrollX / (float)mapWidth);
+        posY += (mapHeight * 0.5 * invScale) * (diffStep - 1) * lerp(1, -1, (float)scrollY / (float)mapHeight);
     }
 
     // Drag
     if (dragging) {
-        posX += (mouseX - dragX) / scale;
-        posY += (mouseY - dragY) / scale;
+        posX += (mouseX - dragX) * invScale;
+        posY += (mouseY - dragY) * invScale;
         dragX = mouseX;
         dragY = mouseY;
     }
 
     // Make sure the map stays within the frame
     // Get positions of map corners
-    float x0 = (2*posX + mapWidth/scale - 2*mapWidth + width) * 0.5 * scale;
-    float y0 = mapHeight - (2*posY + mapHeight/scale);
-    float x1 = x0 + mapWidth * scale;
-    float y1 = mapHeight/scale - 2*posY;
+    float x0 = (2*posX + mapWidth*invScale - 2*mapWidth + width) * 0.5 * scale;
+    float y0 = mapHeight - (2*posY + mapHeight*invScale);
+    float x1 = x0 + mapWidth*scale;
+    float y1 = mapHeight * invScale - 2*posY;
 
 	// Wrap coordinates if map is off-screen and update position
 	if (x0 > width) {
@@ -152,14 +155,16 @@ void update() {
 	
     // Contain the map within the frame vertically
     if (y0 < 0.0) {
-        posY = (mapHeight - mapHeight/scale)/2;
+        posY = (mapHeight - mapHeight*invScale)/2;
     } else if (y1 > mapHeight) {
-        posY = (mapHeight/scale - mapHeight)/2;
+        posY = (mapHeight*invScale - mapHeight)/2;
     }
-
-    int rangePrev = slider.range, valuePrev = slider.value;
+    
+    // Slider
+  	int rangePrev = slider.range, valuePrev = slider.value;
     slider.update();
-    // Update opacity targets and speeds
+    
+    // Update bubble opacity targets and speeds
     if (first || slider.range != rangePrev || slider.value != valuePrev) {
         for (int i = 0; i < data.count; ++i) {
             Row row = data.rows[i];
@@ -297,6 +302,12 @@ void drawMap(int wrap) { // Wrap means how many map lengts to move the map on th
     }
 }
 
+void drawFPS() {
+	fill(0);
+    textAlign(LEFT, TOP);
+    text(frameRate, 0, 0);
+}
+
 void draw() {
     update(); // Call update before draw
 
@@ -311,10 +322,7 @@ void draw() {
     	drawMap(i);
 
     /// UI
-    // FPS
-    fill(0);
-    textAlign(LEFT, TOP);
-    text(frameRate, 0, 0);
+    //drawFPS();
     
     // Slider
     slider.draw();
@@ -322,8 +330,8 @@ void draw() {
 
     // Legend
     legend.draw();
-
-    first = false; // Flag that the first iteration is over
+    
+    first = false; // End of first iteration
 }
 
 void mouseWheel(MouseEvent e) {
@@ -333,31 +341,34 @@ void mouseWheel(MouseEvent e) {
     if (scroll < 0) x = -scroll * scaleStep;
     else if (scroll > 0) x = scroll / scaleStep;
 
-    scaleTarget *= x;
-
-    if (scaleTarget < minScale) { 
-        scaleTarget = minScale;
-    } else if (scaleTarget > maxScale) { 
-        scaleTarget = maxScale;
+	if (x != 1.0) {
+        scaleTarget *= x;
+    
+        if (scaleTarget < minScale) { 
+            scaleTarget = minScale;
+        } else if (scaleTarget > maxScale) { 
+            scaleTarget = maxScale;
+        }
+    
+        scrollX = mouseX;
+        scrollY = mouseY;
     }
-
-    scrollX = mouseX;
-    scrollY = mouseY;
 }
 
 void mousePressed(MouseEvent e) {
     if (e.getButton() == LEFT) {
-        if (legend.click()) 
+        if (legend.click()) {
             legend.show = !legend.show;
-        else if (legend.hover())
-            return;
-        else if (!slider.checkHover()) {
-            dragging = true;
-            dragX = mouseX;
-            dragY = mouseY;
+        } else if (!legend.hover()) {
+        	if (!slider.checkHover()) {
+                dragging = true;
+                dragX = mouseX;
+                dragY = mouseY;
+        	}
         }
     }
 }
+
 void mouseReleased(MouseEvent e) {
     if (e.getButton() == LEFT) {
         slider.release();

@@ -1,5 +1,6 @@
 void tooltip(Row r, float cx, float cy) {
     textSize(height * 0.02);
+    textAlign(LEFT, TOP);
     float xPad = height * 0.012; // X padding
     float yPad = xPad * 0.75; // Y padding
     float spacing = yPad * 0.33; // Line spacing
